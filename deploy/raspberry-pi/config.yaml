@@ -1,0 +1,63 @@
+# Low-resource profile for a Raspberry Pi.
+# Replace the client API key and the management secret before exposing the port.
+# Place the dashboard's single management.html at:
+#   /var/lib/cli-proxy-api/static/management.html
+# The systemd unit points MANAGEMENT_STATIC_PATH at that directory.
+# disable-auto-update-panel keeps the server from contacting GitHub.
+# panel-github-repository is the fork used if the file is missing and a
+# one-time download is still allowed.
+config-version: 8
+
+server:
+  host: ""
+  port: 8317
+  low-resource: true
+  # Skip per-request logging middleware and response compression buffers.
+  commercial-mode: true
+  response-compression:
+    enabled: false
+  shutdown-timeout: 5
+  discovery:
+    enabled: false
+  # In-memory caches instead of a bbolt file. Thinking-signature continuity
+  # does not survive a restart while this is true.
+  kv-store:
+    disabled: true
+
+management:
+  allow-remote: false
+  secret-key: "replace-with-a-long-management-secret"
+  disable-control-panel: false
+  disable-auto-update-panel: true
+  panel-github-repository: "hansdoebel/Cli-Proxy-API-Dashboard"
+
+access:
+  api-keys:
+    - "replace-with-a-long-client-api-key"
+
+oauth:
+  auth-dir: "/var/lib/cli-proxy-api/auths"
+  # Default pool is 16 workers. One is enough for a single-user Pi.
+  auth-auto-refresh-workers: 1
+
+routing:
+  retry:
+    request-retry: 1
+    max-retry-credentials: 2
+    max-retry-interval: 5
+
+observability:
+  logs:
+    debug: false
+    logging-to-file: false
+    request-log: false
+    error-logs-max-files: 3
+    logs-max-total-size-mb: 8
+  usage:
+    usage-statistics-enabled: false
+    redis-usage-queue-retention-seconds: 30
+  pprof:
+    enable: false
+
+plugins:
+  enabled: false
