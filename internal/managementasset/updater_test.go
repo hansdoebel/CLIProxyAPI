@@ -81,18 +81,18 @@ func TestFetchLatestAssetOmitsAuthorizationWithoutToken(t *testing.T) {
 }
 
 func TestResolveReleaseURLAcceptsOwnerRepoAndGitHubURLs(t *testing.T) {
-	const hans = "https://api.github.com/repos/hansdoebel/Cli-Proxy-API-Dashboard/releases/latest"
+	const panel = "https://api.github.com/repos/example/panel/releases/latest"
 	tests := []struct {
 		in   string
 		want string
 	}{
 		{in: "", want: defaultManagementReleaseURL},
-		{in: "hansdoebel/Cli-Proxy-API-Dashboard", want: hans},
-		{in: "hansdoebel/Cli-Proxy-API-Dashboard.git", want: hans},
-		{in: "github.com/hansdoebel/Cli-Proxy-API-Dashboard", want: hans},
-		{in: "https://github.com/hansdoebel/Cli-Proxy-API-Dashboard", want: hans},
-		{in: "https://github.com/hansdoebel/Cli-Proxy-API-Dashboard.git", want: hans},
-		{in: "https://api.github.com/repos/hansdoebel/Cli-Proxy-API-Dashboard/releases/latest", want: hans},
+		{in: "example/panel", want: panel},
+		{in: "example/panel.git", want: panel},
+		{in: "github.com/example/panel", want: panel},
+		{in: "https://github.com/example/panel", want: panel},
+		{in: "https://github.com/example/panel.git", want: panel},
+		{in: "https://api.github.com/repos/example/panel/releases/latest", want: panel},
 		{in: "https://example.com/panel", want: defaultManagementReleaseURL},
 	}
 	for _, tt := range tests {

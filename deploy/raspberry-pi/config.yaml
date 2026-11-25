@@ -29,7 +29,9 @@ management:
   secret-key: "replace-with-a-long-management-secret"
   disable-control-panel: false
   disable-auto-update-panel: true
-  panel-github-repository: "hansdoebel/Cli-Proxy-API-Dashboard"
+  # owner/repo, a repository URL, or a releases API URL. Used only if the
+  # local management.html is missing or auto-update is turned back on.
+  panel-github-repository: "YOUR_GITHUB_USER/YOUR_PANEL_REPO"
 
 access:
   api-keys:

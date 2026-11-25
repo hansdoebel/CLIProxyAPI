@@ -1825,7 +1825,7 @@ func TestLocalManagementPanelServesWithoutUpdateWhenFileExists(t *testing.T) {
 		SDKConfig: sdkconfig.SDKConfig{APIKeys: []string{"test-key"}},
 		RemoteManagement: proxyconfig.RemoteManagement{
 			DisableAutoUpdatePanel: true,
-			PanelGitHubRepository:  "hansdoebel/Cli-Proxy-API-Dashboard",
+			PanelGitHubRepository:  "example/panel",
 		},
 	})
 

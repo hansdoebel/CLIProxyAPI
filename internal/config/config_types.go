@@ -552,7 +552,7 @@ type RemoteManagement struct {
 	// When false (the default), the background updater remains enabled; when true, the panel is only downloaded on first access if missing.
 	DisableAutoUpdatePanel bool `yaml:"disable-auto-update-panel"`
 	// PanelGitHubRepository overrides the GitHub repository used to fetch the management panel asset.
-	// Accepts an owner/repo name (hansdoebel/Cli-Proxy-API-Dashboard), a repository URL
+	// Accepts an owner/repo name (example/panel), a repository URL
 	// (https://github.com/org/repo), or an API releases endpoint.
 	PanelGitHubRepository string `yaml:"panel-github-repository"`
 	// BaseURL specifies the base URL of the remote management API for TUI client mode (e.g. "https://proxy.example.com").

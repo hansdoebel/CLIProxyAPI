@@ -1,0 +1,61 @@
+# Headless low-resource profile for a Raspberry Pi.
+# No web panel and no management API. Replace YOUR_CLIENT_API_KEY before use.
+# Provider OAuth tokens are not stored here. Run a login flag once
+# (for example --codex-device-login, which does not open a browser)
+# or copy token JSON files from another machine into auth-dir.
+config-version: 8
+
+server:
+  host: ""
+  port: 8317
+  low-resource: true
+  # Skip per-request logging middleware and response compression buffers.
+  commercial-mode: true
+  response-compression:
+    enabled: false
+  shutdown-timeout: 5
+  discovery:
+    enabled: false
+  # In-memory caches instead of a bbolt file. Thinking-signature continuity
+  # does not survive a restart while this is true.
+  kv-store:
+    disabled: true
+
+management:
+  allow-remote: false
+  # Empty secret disables the management API (/v0/management and /v8/management).
+  secret-key: ""
+  # Do not serve or download management.html.
+  disable-control-panel: true
+  disable-auto-update-panel: true
+
+access:
+  api-keys:
+    - "YOUR_CLIENT_API_KEY"
+
+oauth:
+  auth-dir: "/var/lib/cli-proxy-api/auths"
+  # Default pool is 16 workers. One is enough for a single-user Pi.
+  auth-auto-refresh-workers: 1
+
+routing:
+  retry:
+    request-retry: 1
+    max-retry-credentials: 2
+    max-retry-interval: 5
+
+observability:
+  logs:
+    debug: false
+    logging-to-file: false
+    request-log: false
+    error-logs-max-files: 3
+    logs-max-total-size-mb: 8
+  usage:
+    usage-statistics-enabled: false
+    redis-usage-queue-retention-seconds: 30
+  pprof:
+    enable: false
+
+plugins:
+  enabled: false

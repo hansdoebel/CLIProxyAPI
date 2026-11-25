@@ -69,15 +69,35 @@ The sample config also turns on settings the flag does not force, because they c
 
 `deploy/raspberry-pi/config.yaml` is that profile. `deploy/raspberry-pi/cli-proxy-api.service` runs it with `GOMEMLIMIT=192MiB` and `GOGC=50`. On a Pi 2 you can raise `GOMEMLIMIT` to `384MiB`.
 
+The unit reads `CLIPROXY_CONFIG` (default `/etc/cli-proxy-api/config.yaml`). Copy either `config.yaml` or `config.headless.yaml` to that path, or point the variable at the headless file in a drop-in.
+
 ## Management panel offline
 
 The server serves one local file, `management.html`.
 
-1. Download that file from [hansdoebel/Cli-Proxy-API-Dashboard](https://github.com/hansdoebel/Cli-Proxy-API-Dashboard) (the release asset named `management.html`).
+1. Download `management.html` from the panel repository you set in `management.panel-github-repository`.
 2. Put it in the directory named by `MANAGEMENT_STATIC_PATH`, or in `<config-dir>/static/management.html`.
 3. Set `management.disable-auto-update-panel: true`.
 
-With the file present, `GET /management.html` does not contact GitHub. `management.panel-github-repository` accepts `hansdoebel/Cli-Proxy-API-Dashboard`, `github.com/owner/repo`, or a full GitHub URL. That value is used only when a download actually runs (the file is missing, or auto-update is still on).
+With the file present, `GET /management.html` does not contact GitHub. `management.panel-github-repository` accepts `YOUR_GITHUB_USER/YOUR_PANEL_REPO`, `github.com/owner/repo`, or a full GitHub URL. That value is used only when a download actually runs (the file is missing, or auto-update is still on).
+
+## Headless
+
+`deploy/raspberry-pi/config.headless.yaml` is the same low-resource profile with the panel and the management API left off:
+
+- `management.disable-control-panel: true` so `/management.html` is not served.
+- `management.secret-key: ""` so `/v0/management` and `/v8/management` are not registered.
+- `management.disable-auto-update-panel: true` so the process does not download a panel.
+
+Headless does not shrink the binary. On the lean build, with the same `GOMEMLIMIT` and `GOGC`, idle RSS was 43,896 kB headless and 43,860 kB with the panel profile. That gap is noise. The panel is a separate file, often a few megabytes on disk, and it is not part of the process until a client fetches it. Sending a 3 MiB `management.html` added about 200 kB of process RSS, because the server does not copy the file into the heap. Headless never downloads or serves that file, and it does not register the management routes.
+
+Provider logins are not in the config. On the Pi, run one login flag and then start the server, for example:
+
+```bash
+cli-proxy-api --config /etc/cli-proxy-api/config.yaml --codex-device-login --no-browser
+```
+
+`--codex-device-login` prints a code and does not open a browser. Other providers have their own `--*-login` flags. You can also copy existing token JSON files into `oauth.auth-dir` (`/var/lib/cli-proxy-api/auths`). Clients still authenticate with `access.api-keys`; replace `YOUR_CLIENT_API_KEY` before exposing the port.
 
 ## Measurements
 

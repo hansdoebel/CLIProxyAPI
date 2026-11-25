@@ -8,7 +8,12 @@ Type=simple
 User=cliproxy
 Group=cliproxy
 WorkingDirectory=/var/lib/cli-proxy-api
-ExecStart=/usr/local/bin/cli-proxy-api --config /etc/cli-proxy-api/config.yaml --local-model --no-browser
+# Install either sample as this file:
+#   config.yaml           web panel
+#   config.headless.yaml  no panel and no management API
+# A drop-in can override CLIPROXY_CONFIG without editing this unit.
+Environment=CLIPROXY_CONFIG=/etc/cli-proxy-api/config.yaml
+ExecStart=/usr/local/bin/cli-proxy-api --config ${CLIPROXY_CONFIG} --local-model --no-browser
 Restart=on-failure
 RestartSec=3
 

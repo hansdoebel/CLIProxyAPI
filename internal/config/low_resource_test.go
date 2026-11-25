@@ -35,10 +35,30 @@ func TestRaspberryPiSampleConfigParses(t *testing.T) {
 	if !cfg.LowResource || !cfg.CommercialMode || !cfg.RemoteManagement.DisableAutoUpdatePanel {
 		t.Fatalf("sample profile = low-resource:%t commercial:%t disable-auto-update:%t", cfg.LowResource, cfg.CommercialMode, cfg.RemoteManagement.DisableAutoUpdatePanel)
 	}
-	if cfg.RemoteManagement.PanelGitHubRepository != "hansdoebel/Cli-Proxy-API-Dashboard" {
+	if cfg.RemoteManagement.PanelGitHubRepository != "YOUR_GITHUB_USER/YOUR_PANEL_REPO" {
 		t.Fatalf("panel repo = %q", cfg.RemoteManagement.PanelGitHubRepository)
 	}
 	if cfg.AuthAutoRefreshWorkers != 1 || cfg.KVStore.Disabled != true {
 		t.Fatalf("workers = %d kv disabled = %t", cfg.AuthAutoRefreshWorkers, cfg.KVStore.Disabled)
+	}
+}
+
+func TestRaspberryPiHeadlessConfigDisablesManagement(t *testing.T) {
+	data, err := os.ReadFile("../../deploy/raspberry-pi/config.headless.yaml")
+	if err != nil {
+		t.Fatalf("read headless config: %v", err)
+	}
+	cfg, err := ParseConfigBytes(data)
+	if err != nil {
+		t.Fatalf("parse headless config: %v", err)
+	}
+	if !cfg.LowResource || !cfg.RemoteManagement.DisableControlPanel || !cfg.RemoteManagement.DisableAutoUpdatePanel {
+		t.Fatalf("headless flags = low-resource:%t panel-off:%t auto-update-off:%t", cfg.LowResource, cfg.RemoteManagement.DisableControlPanel, cfg.RemoteManagement.DisableAutoUpdatePanel)
+	}
+	if cfg.RemoteManagement.SecretKey != "" {
+		t.Fatal("headless management secret is set")
+	}
+	if len(cfg.APIKeys) != 1 || cfg.APIKeys[0] != "YOUR_CLIENT_API_KEY" {
+		t.Fatalf("api keys = %#v", cfg.APIKeys)
 	}
 }
