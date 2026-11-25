@@ -33,6 +33,17 @@ const (
 	antigravityFailureMaxCount       = uint8(5)
 )
 
+var antigravityRefreshInterval = antigravityRefreshScanInterval
+
+// SetAntigravityRefreshInterval changes the antigravity model scan cadence.
+// Non-positive values are ignored.
+func SetAntigravityRefreshInterval(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	antigravityRefreshInterval = interval
+}
+
 type antigravityProbeStatus = sdkauth.AntigravityProbeStatus
 
 const (
@@ -960,9 +971,9 @@ func (s *Service) scheduleAntigravityModelRefresh(ctx context.Context, auth *cor
 // The upper bound still discovers accounts/config changes that bypass a wakeup.
 func (s *Service) nextAntigravityModelRefreshDelay() time.Duration {
 	now := antigravityNowFunc()
-	next := now.Add(antigravityRefreshScanInterval)
+	next := now.Add(antigravityRefreshInterval)
 	if s == nil || s.coreManager == nil || s.antigravityHomeEnabled() {
-		return antigravityRefreshScanInterval
+		return antigravityRefreshInterval
 	}
 	for _, auth := range s.coreManager.List() {
 		if auth == nil || shouldSkipAntigravityModelProbe(auth, now) || !strings.EqualFold(auth.Provider, "antigravity") {

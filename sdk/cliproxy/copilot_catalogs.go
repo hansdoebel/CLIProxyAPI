@@ -16,6 +16,17 @@ import (
 const copilotCatalogRetryDelay = 5 * time.Minute
 const copilotCatalogWorkers = 4
 
+var copilotCatalogRefreshInterval = time.Minute
+
+// SetCopilotCatalogRefreshInterval changes the copilot catalog reconcile cadence
+// for refreshers that have not started. Non-positive values are ignored.
+func SetCopilotCatalogRefreshInterval(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	copilotCatalogRefreshInterval = interval
+}
+
 var errCopilotCatalogSuperseded = errors.New("copilot: catalog refresh superseded")
 
 // Discovery has a separate worker pool. A stalled directory request
@@ -128,7 +139,7 @@ func (r *copilotCatalogRefresher) run(ctx context.Context) {
 	}()
 	// The independent clock refreshes long-lived credentials' catalogs and
 	// revokes expired models even while the discovery worker is blocked.
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(copilotCatalogRefreshInterval)
 	defer ticker.Stop()
 	r.reconcile(ctx, time.Now())
 	for {

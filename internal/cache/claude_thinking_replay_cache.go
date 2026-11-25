@@ -21,7 +21,7 @@ const (
 	// ClaudeThinkingReplayCacheTTL limits how long signed assistant turns stay replayable.
 	ClaudeThinkingReplayCacheTTL = 1 * time.Hour
 
-	// ClaudeThinkingReplayCacheMaxEntries bounds process memory used by Claude replay continuity.
+	// claudeReplayMaxEntries() bounds process memory used by Claude replay continuity.
 	ClaudeThinkingReplayCacheMaxEntries = 10240
 
 	// ClaudeThinkingReplayCacheEvictBatchSize leaves headroom after reaching capacity.
@@ -36,7 +36,7 @@ const (
 	// ClaudeThinkingReplayCacheMaxBlocksPerTurn prevents pathological content arrays.
 	ClaudeThinkingReplayCacheMaxBlocksPerTurn = 512
 
-	// ClaudeThinkingReplayCacheMaxTotalBytes bounds aggregate in-process Claude replay content.
+	// claudeReplayMaxTotalBytes() bounds aggregate in-process Claude replay content.
 	ClaudeThinkingReplayCacheMaxTotalBytes = 256 << 20
 
 	claudeThinkingReplayCacheMaxSerializedBytes = ClaudeThinkingReplayCacheMaxBytesPerSession + 1024
@@ -437,7 +437,7 @@ func claudeThinkingReplayCanonicalJSON(raw []byte) ([]byte, bool) {
 }
 
 func enforceClaudeThinkingReplayLimitsLocked() {
-	for len(claudeThinkingReplayEntries) > ClaudeThinkingReplayCacheMaxEntries || claudeThinkingReplayTotalBytes > ClaudeThinkingReplayCacheMaxTotalBytes {
+	for len(claudeThinkingReplayEntries) > claudeReplayMaxEntries() || claudeThinkingReplayTotalBytes > claudeReplayMaxTotalBytes() {
 		if len(claudeThinkingReplayEntries) == 0 {
 			claudeThinkingReplayTotalBytes = 0
 			return

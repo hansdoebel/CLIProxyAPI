@@ -108,7 +108,7 @@ func CacheCodexReasoningReplayItemsBestEffort(ctx context.Context, modelName, se
 		Items:     normalized,
 		Timestamp: now,
 	}
-	if len(codexReasoningReplayEntries) > CodexReasoningReplayCacheMaxEntries {
+	if len(codexReasoningReplayEntries) > codexReplayMaxEntries() {
 		evictOldestCodexReasoningReplayEntries(CodexReasoningReplayCacheEvictBatchSize)
 	}
 	return true
@@ -181,7 +181,7 @@ func AppendCodexReasoningReplayItemsBestEffort(ctx context.Context, modelName, s
 	entry.Items = appendCodexReasoningReplayTurn(entry.Items, normalized)
 	entry.Timestamp = now
 	codexReasoningReplayEntries[key] = entry
-	if len(codexReasoningReplayEntries) > CodexReasoningReplayCacheMaxEntries {
+	if len(codexReasoningReplayEntries) > codexReplayMaxEntries() {
 		evictOldestCodexReasoningReplayEntries(CodexReasoningReplayCacheEvictBatchSize)
 	}
 	codexReasoningReplayMu.Unlock()
@@ -220,7 +220,7 @@ func trimCodexReasoningReplayItems(items [][]byte) [][]byte {
 				turnStarts = append(turnStarts, index)
 			}
 		}
-		if len(turnStarts) <= CodexReasoningReplayCacheMaxTurnsPerEntry && totalBytes <= CodexReasoningReplayCacheMaxBytesPerEntry {
+		if len(turnStarts) <= CodexReasoningReplayCacheMaxTurnsPerEntry && totalBytes <= codexReplayMaxBytesPerEntry() {
 			return items
 		}
 		if len(turnStarts) <= 1 {

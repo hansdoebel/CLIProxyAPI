@@ -133,3 +133,47 @@ func matchesAny(name string, patterns []string) bool {
 	}
 	return false
 }
+
+func extractInterfaceAddrs(addrs []net.Addr) []string {
+	var v4, v6Global, v6LinkLocal []string
+	for _, addr := range addrs {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
+		}
+		if ip == nil || ip.IsLoopback() || ip.IsUnspecified() {
+			continue
+		}
+		if ip4 := ip.To4(); ip4 != nil {
+			v4 = append(v4, ip4.String())
+			continue
+		}
+		if ip16 := ip.To16(); ip16 != nil {
+			if ip16.IsGlobalUnicast() {
+				v6Global = append(v6Global, ip16.String())
+			} else if ip16.IsLinkLocalUnicast() {
+				v6LinkLocal = append(v6LinkLocal, ip16.String())
+			}
+		}
+	}
+	if len(v6Global) > 0 {
+		return append(v4, v6Global...)
+	}
+	return append(v4, v6LinkLocal...)
+}
+
+// extractInterfaceIPs collects non-loopback IP addresses from the selected interfaces.
+func extractInterfaceIPs(ifaces []net.Interface) []string {
+	var ips []string
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		ips = append(ips, extractInterfaceAddrs(addrs)...)
+	}
+	return ips
+}

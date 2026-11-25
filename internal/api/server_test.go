@@ -1813,6 +1813,33 @@ func TestVideosRoutesKeepXAINativeAndExposeOpenAIPrefix(t *testing.T) {
 	}
 }
 
+func TestLocalManagementPanelServesWithoutUpdateWhenFileExists(t *testing.T) {
+	staticDir := t.TempDir()
+	t.Setenv("MANAGEMENT_STATIC_PATH", staticDir)
+	const panel = "<html>hans dashboard</html>"
+	if err := os.WriteFile(filepath.Join(staticDir, "management.html"), []byte(panel), 0o600); err != nil {
+		t.Fatalf("write management.html: %v", err)
+	}
+
+	server := newTestServerWithConfig(t, &proxyconfig.Config{
+		SDKConfig: sdkconfig.SDKConfig{APIKeys: []string{"test-key"}},
+		RemoteManagement: proxyconfig.RemoteManagement{
+			DisableAutoUpdatePanel: true,
+			PanelGitHubRepository:  "example/panel",
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/management.html", nil)
+	rr := httptest.NewRecorder()
+	server.engine.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 body=%s", rr.Code, rr.Body.String())
+	}
+	if rr.Body.String() != panel {
+		t.Fatalf("body = %q, want local panel", rr.Body.String())
+	}
+}
+
 func TestHomeEnabledHidesManagementEndpointsAndControlPanel(t *testing.T) {
 	t.Setenv("MANAGEMENT_PASSWORD", "test-management-key")
 

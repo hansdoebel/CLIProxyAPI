@@ -1,3 +1,5 @@
+//go:build !nodiscovery
+
 package discovery
 
 import (
@@ -2411,50 +2413,6 @@ func resolveAdvertisedHost(ctx context.Context, instanceName, osHost, domain str
 	return candidate, err
 }
 
-func extractInterfaceAddrs(addrs []net.Addr) []string {
-	var v4, v6Global, v6LinkLocal []string
-	for _, addr := range addrs {
-		var ip net.IP
-		switch v := addr.(type) {
-		case *net.IPNet:
-			ip = v.IP
-		case *net.IPAddr:
-			ip = v.IP
-		}
-		if ip == nil || ip.IsLoopback() || ip.IsUnspecified() {
-			continue
-		}
-		if ip4 := ip.To4(); ip4 != nil {
-			v4 = append(v4, ip4.String())
-			continue
-		}
-		if ip16 := ip.To16(); ip16 != nil {
-			if ip16.IsGlobalUnicast() {
-				v6Global = append(v6Global, ip16.String())
-			} else if ip16.IsLinkLocalUnicast() {
-				v6LinkLocal = append(v6LinkLocal, ip16.String())
-			}
-		}
-	}
-	if len(v6Global) > 0 {
-		return append(v4, v6Global...)
-	}
-	return append(v4, v6LinkLocal...)
-}
-
-// extractInterfaceIPs collects non-loopback IP addresses from the selected interfaces.
-func extractInterfaceIPs(ifaces []net.Interface) []string {
-	var ips []string
-	for _, iface := range ifaces {
-		addrs, err := iface.Addrs()
-		if err != nil {
-			continue
-		}
-		ips = append(ips, extractInterfaceAddrs(addrs)...)
-	}
-	return ips
-}
-
 func supportsPerInterfaceAddrs(goos string) bool {
 	switch goos {
 	case "darwin", "ios", "linux":
@@ -2687,12 +2645,10 @@ func NewZeroconfBrowser(ifaces ...net.Interface) *ZeroconfBrowser {
 }
 
 const (
-	maxDiscoveredServices      = 256
-	maxBrowseTXTRecords        = 64
-	maxBrowseTXTBytes          = 16 * 1024
-	maxDiscoveredAddresses     = 64
-	maxDiscoveredMetadataItems = 32
-	maxMetadataItemBytes       = 64
+	maxDiscoveredServices  = 256
+	maxBrowseTXTRecords    = 64
+	maxBrowseTXTBytes      = 16 * 1024
+	maxDiscoveredAddresses = 64
 )
 
 func browseEntryWithinLimits(entry *zeroconf.ServiceEntry) bool {
@@ -2738,45 +2694,6 @@ func (b *ZeroconfBrowser) Browse(ctx context.Context, serviceType, domain string
 		}
 	}
 	return browseLAN(ctx, ifaces, serviceType, domain)
-}
-
-func appendUniqueStrings(dst, src []string) []string {
-	for _, value := range src {
-		value = strings.TrimSpace(value)
-		if value == "" || len(value) > maxMetadataItemBytes || len(dst) >= maxDiscoveredMetadataItems {
-			continue
-		}
-		duplicate := false
-		for _, existing := range dst {
-			if existing == value {
-				duplicate = true
-				break
-			}
-		}
-		if !duplicate {
-			dst = append(dst, value)
-		}
-	}
-	return dst
-}
-
-func parseTXTList(value string) []string {
-	var result []string
-	for len(value) > 0 && len(result) < maxDiscoveredMetadataItems {
-		item := value
-		if before, after, ok := strings.Cut(value, ","); ok {
-			item = before
-			value = after
-		} else {
-			value = ""
-		}
-		item = strings.TrimSpace(item)
-		if item == "" || len(item) > maxMetadataItemBytes {
-			continue
-		}
-		result = appendUniqueStrings(result, []string{item})
-	}
-	return result
 }
 
 // BrowseWithFallback discovers all AI gateways on the LAN (_ai-gateway._tcp) and prioritizes CPA instances.

@@ -16,6 +16,19 @@ import (
 // ModelsRefreshInterval is the shared cadence for model catalogs and account entitlements.
 const ModelsRefreshInterval = 3 * time.Hour
 
+// modelsRefreshInterval is the runtime cadence. It starts at ModelsRefreshInterval
+// and can be lengthened by the low-resource profile before updaters start.
+var modelsRefreshInterval = ModelsRefreshInterval
+
+// SetModelsRefreshInterval changes the catalog refresh cadence for updaters that
+// have not started yet. Non-positive values are ignored.
+func SetModelsRefreshInterval(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	modelsRefreshInterval = interval
+}
+
 var modelsURLs = []string{
 	"https://raw.githubusercontent.com/router-for-me/models/refs/heads/main/models.json",
 	"https://models.router-for.me/models.json",

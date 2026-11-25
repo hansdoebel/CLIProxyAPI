@@ -13,7 +13,6 @@ import (
 	cliproxyauth "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/auth"
 	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/executor"
 	sdktranslator "github.com/router-for-me/CLIProxyAPI/v8/sdk/translator"
-	"github.com/tiktoken-go/tokenizer"
 )
 
 func (e *CodexExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Auth, req cliproxyexecutor.Request, opts cliproxyexecutor.Options) (cliproxyexecutor.Response, error) {
@@ -68,27 +67,27 @@ func (e *CodexExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Auth
 	return cliproxyexecutor.Response{Payload: translated}, nil
 }
 
-func tokenizerForCodexModel(model string) (tokenizer.Codec, error) {
+func tokenizerForCodexModel(model string) (helps.TokenCounter, error) {
 	sanitized := strings.ToLower(strings.TrimSpace(model))
 	switch {
 	case sanitized == "":
-		return tokenizer.Get(tokenizer.Cl100kBase)
+		return helps.LoadTokenCounter("cl100k")
 	case strings.HasPrefix(sanitized, "gpt-5"):
-		return tokenizer.ForModel(tokenizer.GPT5)
+		return helps.LoadTokenCounter("gpt-5")
 	case strings.HasPrefix(sanitized, "gpt-4.1"):
-		return tokenizer.ForModel(tokenizer.GPT41)
+		return helps.LoadTokenCounter("gpt-4.1")
 	case strings.HasPrefix(sanitized, "gpt-4o"):
-		return tokenizer.ForModel(tokenizer.GPT4o)
+		return helps.LoadTokenCounter("gpt-4o")
 	case strings.HasPrefix(sanitized, "gpt-4"):
-		return tokenizer.ForModel(tokenizer.GPT4)
+		return helps.LoadTokenCounter("gpt-4")
 	case strings.HasPrefix(sanitized, "gpt-3.5"), strings.HasPrefix(sanitized, "gpt-3"):
-		return tokenizer.ForModel(tokenizer.GPT35Turbo)
+		return helps.LoadTokenCounter("gpt-3.5")
 	default:
-		return tokenizer.Get(tokenizer.Cl100kBase)
+		return helps.LoadTokenCounter("cl100k")
 	}
 }
 
-func countCodexInputTokens(enc tokenizer.Codec, body []byte) (int64, error) {
+func countCodexInputTokens(enc helps.TokenCounter, body []byte) (int64, error) {
 	if enc == nil {
 		return 0, fmt.Errorf("encoder is nil")
 	}

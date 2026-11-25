@@ -11,7 +11,6 @@ import (
 	cliproxyauth "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/auth"
 	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/executor"
 	sdktranslator "github.com/router-for-me/CLIProxyAPI/v8/sdk/translator"
-	"github.com/tiktoken-go/tokenizer"
 )
 
 // CountTokens estimates token count for xAI Responses requests.
@@ -20,7 +19,7 @@ func (e *XAIExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Auth, 
 	if err != nil {
 		return cliproxyexecutor.Response{}, err
 	}
-	enc, err := tokenizer.Get(tokenizer.O200kBase)
+	enc, err := helps.LoadTokenCounter("o200k")
 	if err != nil {
 		return cliproxyexecutor.Response{}, fmt.Errorf("xai executor: tokenizer init failed: %w", err)
 	}
@@ -36,7 +35,7 @@ func (e *XAIExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Auth, 
 	return cliproxyexecutor.Response{Payload: translated}, nil
 }
 
-func countXAIInputTokens(enc tokenizer.Codec, body []byte) (int64, error) {
+func countXAIInputTokens(enc helps.TokenCounter, body []byte) (int64, error) {
 	if enc == nil {
 		return 0, fmt.Errorf("encoder is nil")
 	}

@@ -19,7 +19,7 @@ const (
 	// items stay in process memory.
 	XAIReasoningReplayCacheTTL = 1 * time.Hour
 
-	// XAIReasoningReplayCacheMaxEntries bounds process memory for replay
+	// xaiReplayMaxEntries() bounds process memory for replay
 	// continuity. Oldest entries are evicted first.
 	XAIReasoningReplayCacheMaxEntries = 10240
 
@@ -124,7 +124,7 @@ func StoreXAIReasoningReplayItems(ctx context.Context, modelName, sessionKey str
 		Items:     normalized,
 		Timestamp: now,
 	}
-	if len(xaiReasoningReplayEntries) > XAIReasoningReplayCacheMaxEntries {
+	if len(xaiReasoningReplayEntries) > xaiReplayMaxEntries() {
 		evictOldestXAIReasoningReplayEntriesLocked(XAIReasoningReplayCacheEvictBatchSize)
 	}
 	return XAIReasoningReplayStored

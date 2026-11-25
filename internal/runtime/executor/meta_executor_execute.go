@@ -18,7 +18,6 @@ import (
 	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/executor"
 	sdktranslator "github.com/router-for-me/CLIProxyAPI/v8/sdk/translator"
 	log "github.com/sirupsen/logrus"
-	"github.com/tiktoken-go/tokenizer"
 )
 
 type metaPreparedRequest struct {
@@ -378,7 +377,7 @@ func (e *MetaExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Auth,
 	if errPrepare != nil {
 		return cliproxyexecutor.Response{}, errPrepare
 	}
-	enc, errEnc := tokenizer.Get(tokenizer.O200kBase)
+	enc, errEnc := helps.LoadTokenCounter("o200k")
 	if errEnc != nil {
 		return cliproxyexecutor.Response{}, fmt.Errorf("meta executor: tokenizer init failed: %w", errEnc)
 	}

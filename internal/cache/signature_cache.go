@@ -199,6 +199,7 @@ func CacheSignatureBestEffort(ctx context.Context, modelName, text, signature st
 		Signature: signature,
 		Timestamp: time.Now(),
 	}
+	trimSignatureGroup(sc)
 	return true
 }
 

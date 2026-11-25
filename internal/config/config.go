@@ -82,6 +82,11 @@ type Config struct {
 	// CommercialMode disables high-overhead request logging and HTTP middleware features to minimize per-request memory usage.
 	CommercialMode bool `yaml:"commercial-mode" json:"commercial-mode"`
 
+	// LowResource selects memory-conservative cache caps and slower background
+	// refresh loops. It does not change request routing. Default false.
+	// The same switch is CLIPROXY_LOW_RESOURCE=1. See docs/raspberry-pi.md.
+	LowResource bool `yaml:"low-resource,omitempty" json:"low-resource,omitempty"`
+
 	// LoggingToFile controls whether application logs are written to rotating files or stdout.
 	LoggingToFile bool `yaml:"logging-to-file" json:"logging-to-file"`
 

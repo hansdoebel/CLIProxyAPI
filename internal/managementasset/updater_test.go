@@ -80,6 +80,28 @@ func TestFetchLatestAssetOmitsAuthorizationWithoutToken(t *testing.T) {
 	}
 }
 
+func TestResolveReleaseURLAcceptsOwnerRepoAndGitHubURLs(t *testing.T) {
+	const panel = "https://api.github.com/repos/example/panel/releases/latest"
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "", want: defaultManagementReleaseURL},
+		{in: "example/panel", want: panel},
+		{in: "example/panel.git", want: panel},
+		{in: "github.com/example/panel", want: panel},
+		{in: "https://github.com/example/panel", want: panel},
+		{in: "https://github.com/example/panel.git", want: panel},
+		{in: "https://api.github.com/repos/example/panel/releases/latest", want: panel},
+		{in: "https://example.com/panel", want: defaultManagementReleaseURL},
+	}
+	for _, tt := range tests {
+		if got := resolveReleaseURL(tt.in); got != tt.want {
+			t.Fatalf("resolveReleaseURL(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
 func TestAutoUpdateSkipReason(t *testing.T) {
 	tests := []struct {
 		name       string

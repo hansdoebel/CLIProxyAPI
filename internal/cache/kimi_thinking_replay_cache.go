@@ -20,19 +20,19 @@ const (
 	// KimiThinkingReplayCacheTTL limits how long signed assistant content stays replayable.
 	KimiThinkingReplayCacheTTL = 1 * time.Hour
 
-	// KimiThinkingReplayCacheMaxEntries bounds process memory used for replay continuity.
+	// kimiReplayMaxEntries() bounds process memory used for replay continuity.
 	KimiThinkingReplayCacheMaxEntries = 10240
 
 	// KimiThinkingReplayCacheEvictBatchSize leaves headroom after reaching capacity.
 	KimiThinkingReplayCacheEvictBatchSize = 128
 
-	// KimiThinkingReplayCacheMaxBytesPerEntry bounds one complete assistant content array.
+	// kimiReplayMaxBytesPerEntry() bounds one complete assistant content array.
 	KimiThinkingReplayCacheMaxBytesPerEntry = 8 << 20
 
 	// KimiThinkingReplayCacheMaxBlocksPerEntry prevents pathological content arrays.
 	KimiThinkingReplayCacheMaxBlocksPerEntry = 512
 
-	// KimiThinkingReplayCacheMaxTotalBytes bounds aggregate in-process replay content.
+	// kimiReplayMaxTotalBytes() bounds aggregate in-process replay content.
 	KimiThinkingReplayCacheMaxTotalBytes = 256 << 20
 
 	kimiThinkingReplayCacheMaxSerializedBytes = KimiThinkingReplayCacheMaxBytesPerEntry + 1024
@@ -373,7 +373,7 @@ func kimiThinkingReplayKVKey(modelFamily, sessionKey string) string {
 }
 
 func validKimiThinkingReplayContent(content []byte) bool {
-	if len(content) == 0 || len(content) > KimiThinkingReplayCacheMaxBytesPerEntry || !ojson.ValidBytes(content) {
+	if len(content) == 0 || len(content) > kimiReplayMaxBytesPerEntry() || !ojson.ValidBytes(content) {
 		return false
 	}
 	root := util.ParseGJSONBytesNoCopy(content)
@@ -381,7 +381,7 @@ func validKimiThinkingReplayContent(content []byte) bool {
 }
 
 func enforceKimiThinkingReplayLimitsLocked() {
-	for len(kimiThinkingReplayEntries) > KimiThinkingReplayCacheMaxEntries || kimiThinkingReplayTotalBytes > KimiThinkingReplayCacheMaxTotalBytes {
+	for len(kimiThinkingReplayEntries) > kimiReplayMaxEntries() || kimiThinkingReplayTotalBytes > kimiReplayMaxTotalBytes() {
 		if len(kimiThinkingReplayEntries) == 0 {
 			kimiThinkingReplayTotalBytes = 0
 			return

@@ -1,0 +1,34 @@
+[Unit]
+Description=CLIProxyAPI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cliproxy
+Group=cliproxy
+WorkingDirectory=/var/lib/cli-proxy-api
+# Install either sample as this file:
+#   config.yaml           web panel
+#   config.headless.yaml  no panel and no management API
+# A drop-in can override CLIPROXY_CONFIG without editing this unit.
+Environment=CLIPROXY_CONFIG=/etc/cli-proxy-api/config.yaml
+ExecStart=/usr/local/bin/cli-proxy-api --config ${CLIPROXY_CONFIG} --local-model --no-browser
+Restart=on-failure
+RestartSec=3
+
+# 192 MiB fits a 512 MB Raspberry Pi Zero 2 W and a 1 GB Pi 2.
+# On the Pi 2 you can raise this to 384MiB.
+Environment=GOMEMLIMIT=192MiB
+Environment=GOGC=50
+Environment=CLIPROXY_LOW_RESOURCE=1
+Environment=MANAGEMENT_STATIC_PATH=/var/lib/cli-proxy-api/static
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/cli-proxy-api /etc/cli-proxy-api
+
+[Install]
+WantedBy=multi-user.target
