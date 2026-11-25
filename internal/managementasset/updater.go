@@ -36,6 +36,8 @@ const (
 	maxAssetDownloadSize         = 50 << 20 // 10 MB safety limit for management asset downloads
 )
 
+var managementUpdateCheckInterval = updateCheckInterval
+
 // ManagementFileName exposes the control panel asset filename.
 const ManagementFileName = managementAssetName
 
@@ -47,6 +49,15 @@ var (
 	schedulerConfigPath atomic.Value
 	sfGroup             singleflight.Group
 )
+
+// SetUpdateCheckInterval changes how often the management panel updater contacts GitHub.
+// Non-positive values are ignored. The running updater keeps the interval it started with.
+func SetUpdateCheckInterval(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	managementUpdateCheckInterval = interval
+}
 
 // SetCurrentConfig stores the latest configuration snapshot for management asset decisions.
 func SetCurrentConfig(cfg *config.Config) {
@@ -78,7 +89,7 @@ func runAutoUpdater(ctx context.Context) {
 		ctx = context.Background()
 	}
 
-	ticker := time.NewTicker(updateCheckInterval)
+	ticker := time.NewTicker(managementUpdateCheckInterval)
 	defer ticker.Stop()
 
 	runOnce := func() {
@@ -316,6 +327,12 @@ func resolveReleaseURL(repo string) string {
 		return defaultManagementReleaseURL
 	}
 
+	if !strings.Contains(repo, "://") {
+		if releaseURL, ok := releaseURLFromRepoPath(repo); ok {
+			return releaseURL
+		}
+	}
+
 	parsed, err := url.Parse(repo)
 	if err != nil || parsed.Host == "" {
 		return defaultManagementReleaseURL
@@ -332,14 +349,55 @@ func resolveReleaseURL(repo string) string {
 	}
 
 	if host == "github.com" {
-		parts := strings.Split(strings.Trim(parsed.Path, "/"), "/")
-		if len(parts) >= 2 && parts[0] != "" && parts[1] != "" {
-			repoName := strings.TrimSuffix(parts[1], ".git")
-			return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", parts[0], repoName)
+		if releaseURL, ok := releaseURLFromRepoPath(parsed.Path); ok {
+			return releaseURL
 		}
 	}
 
 	return defaultManagementReleaseURL
+}
+
+// releaseURLFromRepoPath accepts "owner/repo", "github.com/owner/repo", and
+// "api.github.com/repos/owner/repo".
+func releaseURLFromRepoPath(path string) (string, bool) {
+	trimmed := strings.Trim(strings.TrimSpace(path), "/")
+	if trimmed == "" {
+		return "", false
+	}
+	lower := strings.ToLower(trimmed)
+	switch {
+	case strings.HasPrefix(lower, "https://"):
+		return "", false
+	case strings.HasPrefix(lower, "api.github.com/repos/"):
+		trimmed = trimmed[len("api.github.com/repos/"):]
+		trimmed = strings.TrimSuffix(trimmed, "/")
+		lower = strings.ToLower(trimmed)
+		if strings.HasSuffix(lower, "/releases/latest") {
+			trimmed = trimmed[:len(trimmed)-len("/releases/latest")]
+		}
+	case strings.HasPrefix(lower, "github.com/"):
+		trimmed = trimmed[len("github.com/"):]
+	}
+	parts := strings.Split(trimmed, "/")
+	if len(parts) < 2 || !validGitHubRepoPart(parts[0]) || !validGitHubRepoPart(strings.TrimSuffix(parts[1], ".git")) {
+		return "", false
+	}
+	repoName := strings.TrimSuffix(parts[1], ".git")
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", parts[0], repoName), true
+}
+
+func validGitHubRepoPart(part string) bool {
+	if part == "" || strings.Contains(part, "..") {
+		return false
+	}
+	for _, r := range part {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_', r == '.':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func fetchLatestAsset(ctx context.Context, client *http.Client, releaseURL string) (*releaseAsset, string, error) {

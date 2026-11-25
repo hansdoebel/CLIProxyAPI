@@ -6,6 +6,11 @@ import (
 )
 
 const (
+	maxDiscoveredMetadataItems = 32
+	maxMetadataItemBytes       = 64
+)
+
+const (
 	maxTXTRecordBytes = 255 // RFC 6763 §6.1 single character-string limit
 	maxTXTBytes       = 400 // draft-su-ai-gateway-discovery-00 TXT budget
 
@@ -401,4 +406,43 @@ func validateDraftTXTRecords(records []string) bool {
 // ProtocolFromSubtype converts a DNS-SD subtype label (e.g. "_responses") to its protocol token.
 func ProtocolFromSubtype(subtype string) string {
 	return strings.ToLower(strings.TrimPrefix(strings.TrimSpace(subtype), "_"))
+}
+
+func appendUniqueStrings(dst, src []string) []string {
+	for _, value := range src {
+		value = strings.TrimSpace(value)
+		if value == "" || len(value) > maxMetadataItemBytes || len(dst) >= maxDiscoveredMetadataItems {
+			continue
+		}
+		duplicate := false
+		for _, existing := range dst {
+			if existing == value {
+				duplicate = true
+				break
+			}
+		}
+		if !duplicate {
+			dst = append(dst, value)
+		}
+	}
+	return dst
+}
+
+func parseTXTList(value string) []string {
+	var result []string
+	for len(value) > 0 && len(result) < maxDiscoveredMetadataItems {
+		item := value
+		if before, after, ok := strings.Cut(value, ","); ok {
+			item = before
+			value = after
+		} else {
+			value = ""
+		}
+		item = strings.TrimSpace(item)
+		if item == "" || len(item) > maxMetadataItemBytes {
+			continue
+		}
+		result = appendUniqueStrings(result, []string{item})
+	}
+	return result
 }

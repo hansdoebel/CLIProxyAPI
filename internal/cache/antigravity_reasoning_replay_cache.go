@@ -22,7 +22,7 @@ const (
 	// items stay in process memory.
 	AntigravityReasoningReplayCacheTTL = 1 * time.Hour
 
-	// AntigravityReasoningReplayCacheMaxEntries bounds process memory for replay
+	// antigravityReplayMaxEntries() bounds process memory for replay
 	// continuity. Oldest entries are evicted first.
 	AntigravityReasoningReplayCacheMaxEntries = 10240
 
@@ -135,7 +135,7 @@ func CacheAntigravityReasoningReplayItemsBestEffort(ctx context.Context, modelNa
 		Revision:  antigravityReasoningReplayNextRevision,
 		Branch:    newAntigravityReasoningReplayGeneration(),
 	}
-	if len(antigravityReasoningReplayEntries) > AntigravityReasoningReplayCacheMaxEntries {
+	if len(antigravityReasoningReplayEntries) > antigravityReplayMaxEntries() {
 		evictOldestAntigravityReasoningReplayEntries(AntigravityReasoningReplayCacheEvictBatchSize)
 	}
 	return true
@@ -287,8 +287,8 @@ func reserveAntigravityReasoningReplayAbsentLocked(key string, now time.Time) An
 
 func writeAntigravityReasoningReplayTombstoneLocked(key string, now time.Time) AntigravityReasoningReplaySnapshot {
 	_, exists := antigravityReasoningReplayEntries[key]
-	if (!exists && len(antigravityReasoningReplayEntries) >= AntigravityReasoningReplayCacheMaxEntries) ||
-		len(antigravityReasoningReplayEntries) > AntigravityReasoningReplayCacheMaxEntries {
+	if (!exists && len(antigravityReasoningReplayEntries) >= antigravityReplayMaxEntries()) ||
+		len(antigravityReasoningReplayEntries) > antigravityReplayMaxEntries() {
 		evictOldestAntigravityReasoningReplayEntries(AntigravityReasoningReplayCacheEvictBatchSize)
 	}
 	antigravityReasoningReplayNextRevision++
@@ -380,7 +380,7 @@ func ReplaceAntigravityReasoningReplayItemsIfUnchanged(ctx context.Context, mode
 	}
 	antigravityReasoningReplayNextRevision++
 	antigravityReasoningReplayEntries[key] = antigravityReasoningReplayEntry{Items: normalized, Timestamp: now, Revision: antigravityReasoningReplayNextRevision, Branch: branch}
-	if len(antigravityReasoningReplayEntries) > AntigravityReasoningReplayCacheMaxEntries {
+	if len(antigravityReasoningReplayEntries) > antigravityReplayMaxEntries() {
 		evictOldestAntigravityReasoningReplayEntries(AntigravityReasoningReplayCacheEvictBatchSize)
 	}
 	return true, nil
@@ -616,7 +616,7 @@ func normalizeAntigravityReasoningReplayItems(items [][]byte) ([][]byte, bool) {
 		normalizedItem, ok := normalizeAntigravityReasoningReplayItem(item)
 		if ok {
 			totalBytes += len(normalizedItem)
-			if totalBytes > AntigravityReasoningReplayCacheMaxBytesPerEntry {
+			if totalBytes > antigravityReplayMaxBytesPerEntry() {
 				return nil, false
 			}
 			normalized = append(normalized, normalizedItem)

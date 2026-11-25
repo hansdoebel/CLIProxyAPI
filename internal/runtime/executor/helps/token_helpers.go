@@ -6,40 +6,39 @@ import (
 
 	"github.com/MoeForge/moego/ojson"
 	"github.com/router-for-me/CLIProxyAPI/v8/internal/util"
-	"github.com/tiktoken-go/tokenizer"
 )
 
 // TokenizerForModel returns a tokenizer codec suitable for an OpenAI-style model id.
-func TokenizerForModel(model string) (tokenizer.Codec, error) {
+func TokenizerForModel(model string) (TokenCounter, error) {
 	sanitized := strings.ToLower(strings.TrimSpace(model))
 	switch {
 	case sanitized == "":
-		return tokenizer.Get(tokenizer.Cl100kBase)
+		return LoadTokenCounter("cl100k")
 	case strings.HasPrefix(sanitized, "gpt-5"):
-		return tokenizer.ForModel(tokenizer.GPT5)
+		return LoadTokenCounter("gpt-5")
 	case strings.HasPrefix(sanitized, "gpt-5.1"):
-		return tokenizer.ForModel(tokenizer.GPT5)
+		return LoadTokenCounter("gpt-5")
 	case strings.HasPrefix(sanitized, "gpt-4.1"):
-		return tokenizer.ForModel(tokenizer.GPT41)
+		return LoadTokenCounter("gpt-4.1")
 	case strings.HasPrefix(sanitized, "gpt-4o"):
-		return tokenizer.ForModel(tokenizer.GPT4o)
+		return LoadTokenCounter("gpt-4o")
 	case strings.HasPrefix(sanitized, "gpt-4"):
-		return tokenizer.ForModel(tokenizer.GPT4)
+		return LoadTokenCounter("gpt-4")
 	case strings.HasPrefix(sanitized, "gpt-3.5"), strings.HasPrefix(sanitized, "gpt-3"):
-		return tokenizer.ForModel(tokenizer.GPT35Turbo)
+		return LoadTokenCounter("gpt-3.5")
 	case strings.HasPrefix(sanitized, "o1"):
-		return tokenizer.ForModel(tokenizer.O1)
+		return LoadTokenCounter("o1")
 	case strings.HasPrefix(sanitized, "o3"):
-		return tokenizer.ForModel(tokenizer.O3)
+		return LoadTokenCounter("o3")
 	case strings.HasPrefix(sanitized, "o4"):
-		return tokenizer.ForModel(tokenizer.O4Mini)
+		return LoadTokenCounter("o4-mini")
 	default:
-		return tokenizer.Get(tokenizer.O200kBase)
+		return LoadTokenCounter("o200k")
 	}
 }
 
 // CountOpenAIChatTokens approximates prompt tokens for OpenAI chat completions payloads.
-func CountOpenAIChatTokens(enc tokenizer.Codec, payload []byte) (int64, error) {
+func CountOpenAIChatTokens(enc TokenCounter, payload []byte) (int64, error) {
 	if enc == nil {
 		return 0, fmt.Errorf("encoder is nil")
 	}

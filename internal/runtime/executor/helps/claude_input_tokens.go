@@ -10,7 +10,6 @@ import (
 	"github.com/MoeForge/moego/json"
 	"github.com/MoeForge/moego/ojson"
 	log "github.com/sirupsen/logrus"
-	"github.com/tiktoken-go/tokenizer"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/internal/util"
 	sdktranslator "github.com/router-for-me/CLIProxyAPI/v8/sdk/translator"
@@ -18,7 +17,7 @@ import (
 
 var (
 	claudeInputTokenizerOnce  sync.Once
-	claudeInputTokenizerCodec tokenizer.Codec
+	claudeInputTokenizerCodec TokenCounter
 	claudeInputTokenizerErr   error
 )
 
@@ -27,7 +26,7 @@ type ClaudeInputTokenState struct {
 	upstreamFormat  sdktranslator.Format
 	responseFormat  sdktranslator.Format
 	originalRequest []byte
-	codec           tokenizer.Codec
+	codec           TokenCounter
 	handled         bool
 }
 
@@ -82,9 +81,9 @@ func (state *ClaudeInputTokenState) FinalizeTranslatedUsage(ctx context.Context,
 	return state.apply(ctx, chunks)
 }
 
-func claudeInputTokenizer() (tokenizer.Codec, error) {
+func claudeInputTokenizer() (TokenCounter, error) {
 	claudeInputTokenizerOnce.Do(func() {
-		claudeInputTokenizerCodec, claudeInputTokenizerErr = tokenizer.Get(tokenizer.O200kBase)
+		claudeInputTokenizerCodec, claudeInputTokenizerErr = LoadTokenCounter("o200k")
 	})
 	return claudeInputTokenizerCodec, claudeInputTokenizerErr
 }
@@ -102,7 +101,7 @@ func CountClaudeInputTokens(payload []byte) (int64, error) {
 	return count, nil
 }
 
-func countClaudeInputTokens(enc tokenizer.Codec, payload []byte) (int64, error) {
+func countClaudeInputTokens(enc TokenCounter, payload []byte) (int64, error) {
 	if enc == nil {
 		return 0, fmt.Errorf("encoder is nil")
 	}

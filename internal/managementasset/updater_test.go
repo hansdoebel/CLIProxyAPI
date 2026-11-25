@@ -80,6 +80,28 @@ func TestFetchLatestAssetOmitsAuthorizationWithoutToken(t *testing.T) {
 	}
 }
 
+func TestResolveReleaseURLAcceptsOwnerRepoAndGitHubURLs(t *testing.T) {
+	const hans = "https://api.github.com/repos/hansdoebel/Cli-Proxy-API-Dashboard/releases/latest"
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "", want: defaultManagementReleaseURL},
+		{in: "hansdoebel/Cli-Proxy-API-Dashboard", want: hans},
+		{in: "hansdoebel/Cli-Proxy-API-Dashboard.git", want: hans},
+		{in: "github.com/hansdoebel/Cli-Proxy-API-Dashboard", want: hans},
+		{in: "https://github.com/hansdoebel/Cli-Proxy-API-Dashboard", want: hans},
+		{in: "https://github.com/hansdoebel/Cli-Proxy-API-Dashboard.git", want: hans},
+		{in: "https://api.github.com/repos/hansdoebel/Cli-Proxy-API-Dashboard/releases/latest", want: hans},
+		{in: "https://example.com/panel", want: defaultManagementReleaseURL},
+	}
+	for _, tt := range tests {
+		if got := resolveReleaseURL(tt.in); got != tt.want {
+			t.Fatalf("resolveReleaseURL(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
 func TestAutoUpdateSkipReason(t *testing.T) {
 	tests := []struct {
 		name       string

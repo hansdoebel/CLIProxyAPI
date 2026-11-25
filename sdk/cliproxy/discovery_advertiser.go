@@ -11,7 +11,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const defaultDiscoveryRefreshInterval = 15 * time.Second
+var defaultDiscoveryRefreshInterval = 15 * time.Second
+
+// SetDiscoveryRefreshInterval changes the mDNS refresh cadence used when a
+// manager has not chosen its own interval. Non-positive values are ignored.
+func SetDiscoveryRefreshInterval(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	defaultDiscoveryRefreshInterval = interval
+}
 
 type discoveryRefresh struct {
 	stop     chan struct{}

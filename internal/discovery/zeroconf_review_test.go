@@ -1,3 +1,5 @@
+//go:build !nodiscovery
+
 package discovery
 
 import (
